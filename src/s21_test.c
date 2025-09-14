@@ -221,8 +221,8 @@ START_TEST(test_memset_null_terminator) {
 END_TEST
 
 START_TEST(test_memset_str_eq) {
-  char s1[11] = "111111111\0";
-  char s2[11] = "111111111\0";
+  char s1[10] = "111111111\0";
+  char s2[10] = "111111111\0";
 
   char *dest1 = memset(s1, 12, 3);
   char *dest2 = s21_memset(s2, 12, 3);

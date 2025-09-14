@@ -55,7 +55,13 @@ $(LIB_FILE): $(OBJS)
 ###--------→ CLANG ←---------------------------------------------------------------###
 CLANG_FILES := $(shell find . \( -name '*.c' -o -name '*.h' \))
 
-f:
+clangn:
+	@cp ../materials/linters/.clang-format . 
+	@clang-format-18 -n $(CLANG_FILES)
+	@rm .clang-format
+	@echo "Clang done"
+
+clangi:
 	@cp ../materials/linters/.clang-format . 
 	@clang-format-18 -i $(CLANG_FILES)
 	@rm .clang-format
