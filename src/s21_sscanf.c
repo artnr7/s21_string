@@ -114,21 +114,25 @@ const char *format_d(const char *str, va_list vars, flags_spec *fs) {
   while (*str == ' ') {
     str++;
   }
-  int sign = sign_value(&str, &width_count);
-  int number = 0;
-  while (*str >= '0' && *str <= '9' &&
-         (width_count++ < fs->width || fs->width == -1)) {
-    number = number * 10 + (*str - '0');
-    str++;
-  }
-  int value = sign * number;
-  fs->width = -1;
-  if (!fs->star) {
-    int_len(value, vars, fs);
+  if (*str == '\0') {
+    fs->count = -1;
   } else {
-    fs->star = 0;
-  }
-  fs->count++;
+    int sign = sign_value(&str, &width_count);
+    int number = 0;
+    while (*str >= '0' && *str <= '9' &&
+          (width_count++ < fs->width || fs->width == -1)) {
+      number = number * 10 + (*str - '0');
+      str++;
+    }
+    int value = sign * number;
+    fs->width = -1;
+    if (!fs->star) {
+      int_len(value, vars, fs);
+    } else {
+      fs->star = 0;
+    }
+    fs->count++;
+ }
   return str;
 }
 
