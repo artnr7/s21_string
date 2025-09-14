@@ -78,6 +78,15 @@ START_TEST(test_memcmp) {
 }
 END_TEST
 
+START_TEST(test_memcmp_null) {
+  char *str1 = "32tju6ei7jw";
+  char *str2 = S21_NULL;
+  int result1 = memcmp(str1, str2, 0);
+  int result2 = s21_memcmp(str1, str2, 0);
+  ck_assert_int_eq(result1, result2);
+}
+
+END_TEST
 START_TEST(test_memcmp_first_less_second) {
   char s1[10] = "addbbbb";
   char s2[10] = "adddddd";
@@ -212,8 +221,8 @@ START_TEST(test_memset_null_terminator) {
 END_TEST
 
 START_TEST(test_memset_str_eq) {
-  char s1[10] = "111111111\0";
-  char s2[10] = "111111111\0";
+  char s1[11] = "111111111\0";
+  char s2[11] = "111111111\0";
 
   char *dest1 = memset(s1, 12, 3);
   char *dest2 = s21_memset(s2, 12, 3);
@@ -2151,6 +2160,15 @@ START_TEST(test_all_specifiers_with_length) {
 }
 END_TEST
 
+START_TEST(test_sscanf_one_num) {
+  char fstr[] = "%d ";
+  char str[] = "               ";
+  int a1 = 0, a2 = 0;
+  int result = s21_sscanf(str, fstr, &a1);
+  int result_orig = sscanf(str, fstr, &a2);
+  ck_assert_int_eq(result, result_orig);
+}
+
 START_TEST(test_sscanf_char) {
   char result = '\0', result_orig = '\0';
   const char *str = "A";
@@ -2994,6 +3012,7 @@ Suite *create_test_suite() {
   tcase_add_test(tc_core, test_memset_str_eq);
 
   tcase_add_test(tc_core, test_memcmp);
+  tcase_add_test(tc_core, test_memcmp_null);
   tcase_add_test(tc_core, test_memcmp_first_less_second);
   tcase_add_test(tc_core, test_memcmp_first_more_second);
   tcase_add_test(tc_core, test_memcmp_eq_n);
@@ -3175,6 +3194,7 @@ Suite *create_test_suite() {
   tcase_add_test(tc_core, test_all_specifiers_with_accuracy);
   tcase_add_test(tc_core, test_all_specifiers_with_length);
 
+  tcase_add_test(tc_core, test_sscanf_one_num);
   tcase_add_test(tc_core, test_sscanf_char);
   tcase_add_test(tc_core, test_sscanf_char_star);
 

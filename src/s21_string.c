@@ -14,8 +14,6 @@ void s21_reverse_str(char *start, char *end) {
 
 void *s21_memchr(const void *str, int c, s21_size_t n) {
   const char *ptr = str;
-  ptr++;
-  ptr--;
   int found = 0;
   s21_size_t cntr = 0;
   while (!found && cntr < n) {
@@ -38,17 +36,14 @@ int s21_memcmp(const void *str1, const void *str2, s21_size_t n) {
   const unsigned char *ptr2 = (const unsigned char *)str2;
   s21_size_t cntr = 0;
   int flag = 0;
-  while (*ptr1 == *ptr2 && cntr < n) {
-    ptr1++;
-    ptr2++;
+  while (cntr < n && !flag) {
+    if (ptr1[cntr] != ptr2[cntr]) {
+      flag = 1;
+    }
     cntr++;
-    flag = 1;
   }
-  if (cntr == n && flag) {
-    ptr1--;
-    ptr2--;
-  }
-  return *ptr1 - *ptr2;
+  cntr--;
+  return flag ? ptr1[cntr] - ptr2[cntr] : 0;
 }
 
 void *s21_memcpy(void *dest, const void *src, s21_size_t n) {

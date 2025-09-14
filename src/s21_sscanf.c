@@ -35,7 +35,7 @@ int s21_sscanf(const char *str, const char *format, ...) {
       }
       format++;
     } else {
-      if (*str == *format) {
+      if ((*str != '\0' && *format != '\0') && *str == *format) {
         str++;
         format++;
       } else {
