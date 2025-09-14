@@ -7,7 +7,7 @@ int s21_sscanf(const char *str, const char *format, ...) {
   fs.count = 0;
   int flag = 0;
   const char *begin_str_ptr = str;
-  while (*format && !flag) {
+  while (*format && !flag && fs.count != -1) {
     while (*format == ' ') format++;
     if (*format == '%') {
       format = flags(&fs, format);
@@ -47,76 +47,86 @@ int s21_sscanf(const char *str, const char *format, ...) {
   return fs.count;
 }
 
-const char *format_o(const char *str, va_list vars, flags_spec *fs) {
-  while (*str == ' ') str++;
-  int width_count = 0;
-  int sign = sign_value(&str, &width_count);
-  long unsigned int number = 0;
-  while (*str >= '0' && *str <= '7' &&
-         (width_count++ < fs->width || fs->width == -1)) {
-    number = number * 8 + (*str - '0');
-    str++;
-  }
-  fs->width = -1;
-  number = number * sign;
-  if (!fs->star) {
-    unsigned_int_len(number, vars, fs);
-  } else {
-    fs->star = 0;
-  }
-  fs->count++;
-  return str;
-}
-
-const char *format_i(const char *str, va_list vars, flags_spec *fs) {
-  int width_count = 0;
-  while (*str == ' ') str++;
-  int sign = sign_value(&str, &width_count);
-  int base = 10;
-  if (*str == '0') {
-    str++;
-    width_count++;
-    if (*str == 'x' || *str == 'X') {
-      base = 16;
-      str++;
-      width_count++;
-    } else {
-      base = 8;
-    }
-  }
-  int number = 0, flag = 0;
-  while ((width_count++ < fs->width || fs->width == -1) && !flag &&
-         ((*str >= '0' && *str <= '9') ||
-          (base == 16 &&
-           ((*str >= 'a' && *str <= 'f') || (*str >= 'A' && *str <= 'F'))))) {
-    if (*str >= '0' && *str <= '9') {
-      number = number * base + (*str - '0');
-    } else if (*str >= 'a' && *str <= 'f') {
-      number = number * base + (*str - 'a' + 10);
-    } else if (*str >= 'A' && *str <= 'F') {
-      number = number * base + (*str - 'A' + 10);
-    }
-    str++;
-  }
-  int value = sign * number;
-  fs->width = -1;
-  if (!fs->star) {
-    int_len(value, vars, fs);
-  } else {
-    fs->star = 0;
-  }
-  fs->count++;
-  return str;
-}
-
-const char *format_d(const char *str, va_list vars, flags_spec *fs) {
-  int width_count = 0;
+const char *skip_spaces(const char *str, flags_spec *fs) {
   while (*str == ' ') {
     str++;
   }
   if (*str == '\0') {
     fs->count = -1;
-  } else {
+  }
+  return str;
+}
+
+const char *format_o(const char *str, va_list vars, flags_spec *fs) {
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    int width_count = 0;
+    int sign = sign_value(&str, &width_count);
+    long unsigned int number = 0;
+    while (*str >= '0' && *str <= '7' &&
+          (width_count++ < fs->width || fs->width == -1)) {
+      number = number * 8 + (*str - '0');
+      str++;
+    }
+    fs->width = -1;
+    number = number * sign;
+    if (!fs->star) {
+      unsigned_int_len(number, vars, fs);
+    } else {
+      fs->star = 0;
+    }
+    fs->count++;
+  }
+  return str;
+}
+
+const char *format_i(const char *str, va_list vars, flags_spec *fs) {
+  int width_count = 0;
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    int sign = sign_value(&str, &width_count);
+    int base = 10;
+    if (*str == '0') {
+      str++;
+      width_count++;
+      if (*str == 'x' || *str == 'X') {
+        base = 16;
+        str++;
+        width_count++;
+      } else {
+        base = 8;
+      }
+    }
+    int number = 0, flag = 0;
+    while ((width_count++ < fs->width || fs->width == -1) && !flag &&
+          ((*str >= '0' && *str <= '9') ||
+            (base == 16 &&
+            ((*str >= 'a' && *str <= 'f') || (*str >= 'A' && *str <= 'F'))))) {
+      if (*str >= '0' && *str <= '9') {
+        number = number * base + (*str - '0');
+      } else if (*str >= 'a' && *str <= 'f') {
+        number = number * base + (*str - 'a' + 10);
+      } else if (*str >= 'A' && *str <= 'F') {
+        number = number * base + (*str - 'A' + 10);
+      }
+      str++;
+    }
+    int value = sign * number;
+    fs->width = -1;
+    if (!fs->star) {
+      int_len(value, vars, fs);
+    } else {
+      fs->star = 0;
+    }
+    fs->count++;
+  }
+  return str;
+}
+
+const char *format_d(const char *str, va_list vars, flags_spec *fs) {
+  int width_count = 0;
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
     int sign = sign_value(&str, &width_count);
     int number = 0;
     while (*str >= '0' && *str <= '9' &&
@@ -132,153 +142,161 @@ const char *format_d(const char *str, va_list vars, flags_spec *fs) {
       fs->star = 0;
     }
     fs->count++;
- }
+  }
   return str;
 }
 
 const char *format_efg(const char *str, va_list vars, flags_spec *fs) {
   int width_count = 0;
-  while (*str == ' ') str++;
-  int sign = sign_value(&str, &width_count);
-  double number = 0.0, fraction = 0.0, divisor = 10.0;
-  int is_fraction = 0, exponent = 0, exp_sign = 1, flag = 0;
-  str = cycle_efg(str, &width_count, &flag, &is_fraction, &number, &fraction,
-                  &divisor, fs);
-  if (*str == 'e' || *str == 'E') {
-    str++;
-    if (*str == '-') {
-      exp_sign = -1;
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    int sign = sign_value(&str, &width_count);
+    double number = 0.0, fraction = 0.0, divisor = 10.0;
+    int is_fraction = 0, exponent = 0, exp_sign = 1, flag = 0;
+    str = cycle_efg(str, &width_count, &flag, &is_fraction, &number, &fraction,
+                    &divisor, fs);
+    if (*str == 'e' || *str == 'E') {
       str++;
-    } else if (*str == '+')
-      str++;
-    while (*str >= '0' && *str <= '9') {
-      exponent = exponent * 10 + (*str - '0');
-      str++;
+      if (*str == '-') {
+        exp_sign = -1;
+        str++;
+      } else if (*str == '+')
+        str++;
+      while (*str >= '0' && *str <= '9') {
+        exponent = exponent * 10 + (*str - '0');
+        str++;
+      }
     }
-  }
-  double result = sign * (number + fraction);
-  if (exponent != 0) {
-    int n = exp_sign * exponent;
-    if (n > 0) {
-      for (int i = 0; i < n; i++) result *= 10;
-    } else if (n < 0) {
-      for (int i = 0; i < -n; i++) result /= 10;
+    double result = sign * (number + fraction);
+    if (exponent != 0) {
+      int n = exp_sign * exponent;
+      if (n > 0) {
+        for (int i = 0; i < n; i++) result *= 10;
+      } else if (n < 0) {
+        for (int i = 0; i < -n; i++) result /= 10;
+      }
     }
-  }
-  fs->width = -1;
-  if (!fs->star) {
-    if (fs->len == 'L') {
-      long double *dbl_ptr = va_arg(vars, long double *);
-      *dbl_ptr = (long double)result;
-      fs->len = 0;
+    fs->width = -1;
+    if (!fs->star) {
+      if (fs->len == 'L') {
+        long double *dbl_ptr = va_arg(vars, long double *);
+        *dbl_ptr = (long double)result;
+        fs->len = 0;
+      } else {
+        float *dbl_ptr = va_arg(vars, float *);
+        *dbl_ptr = (float)result;
+        fs->len = 0;
+      }
     } else {
-      float *dbl_ptr = va_arg(vars, float *);
-      *dbl_ptr = (float)result;
-      fs->len = 0;
+      fs->star = 0;
     }
-  } else {
-    fs->star = 0;
+    fs->count++;
   }
-  fs->count++;
   return str;
 }
 
 const char *format_u(const char *str, va_list vars, flags_spec *fs) {
   int width_count = 0;
-  while (*str == ' ') str++;
-  int sign = sign_value(&str, &width_count);
-  int number = 0;
-  while (*str >= '0' && *str <= '9' &&
-         (width_count++ < fs->width || fs->width == -1)) {
-    number = number * 10 + (*str - '0');
-    str++;
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    int sign = sign_value(&str, &width_count);
+    int number = 0;
+    while (*str >= '0' && *str <= '9' &&
+          (width_count++ < fs->width || fs->width == -1)) {
+      number = number * 10 + (*str - '0');
+      str++;
+    }
+    int value = sign * number;
+    fs->width = -1;
+    if (!fs->star) {
+      unsigned_int_len(value, vars, fs);
+    } else {
+      fs->star = 0;
+    }
+    fs->count++;
   }
-  int value = sign * number;
-  fs->width = -1;
-  if (!fs->star) {
-    unsigned_int_len(value, vars, fs);
-  } else {
-    fs->star = 0;
-  }
-  fs->count++;
   return str;
 }
 
 const char *format_x(const char *str, va_list vars, flags_spec *fs) {
-  while (*str == ' ') str++;
-  unsigned int number = 0;
-  int width_count = 0;
-  int sign = sign_value(&str, &width_count);
-  if (*str == '0') {
-    str++;
-    width_count++;
-    if (*str == 'x' || *str == 'X') {
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    unsigned int number = 0;
+    int width_count = 0;
+    int sign = sign_value(&str, &width_count);
+    if (*str == '0') {
+      str++;
       width_count++;
+      if (*str == 'x' || *str == 'X') {
+        width_count++;
+        str++;
+      }
+    }
+    while ((width_count++ < fs->width || fs->width == -1) &&
+          ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
+            (*str >= 'A' && *str <= 'F'))) {
+      if (*str >= '0' && *str <= '9') {
+        number = number * 16 + (*str - '0');
+      } else if (*str >= 'a' && *str <= 'f') {
+        number = number * 16 + (*str - 'a' + 10);
+      } else if (*str >= 'A' && *str <= 'F') {
+        number = number * 16 + (*str - 'A' + 10);
+      }
       str++;
     }
-  }
-  while ((width_count++ < fs->width || fs->width == -1) &&
-         ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
-          (*str >= 'A' && *str <= 'F'))) {
-    if (*str >= '0' && *str <= '9') {
-      number = number * 16 + (*str - '0');
-    } else if (*str >= 'a' && *str <= 'f') {
-      number = number * 16 + (*str - 'a' + 10);
-    } else if (*str >= 'A' && *str <= 'F') {
-      number = number * 16 + (*str - 'A' + 10);
+    fs->width = -1;
+    number = number * sign;
+    if (!fs->star) {
+      unsigned_int_len(number, vars, fs);
+    } else {
+      fs->star = 0;
     }
-    str++;
+    fs->count++;
   }
-  fs->width = -1;
-  number = number * sign;
-  if (!fs->star) {
-    unsigned_int_len(number, vars, fs);
-  } else {
-    fs->star = 0;
-  }
-  fs->count++;
   return str;
 }
 
 const char *format_p(const char *str, va_list vars, flags_spec *fs) {
-  while (*str == ' ') str++;
-  int width_count = 0;
-  if (*str == '0' && (*(str + 1) == 'x' || *(str + 1) == 'X')) {
-    str += 2;
-    width_count += 2;
-  }
-  unsigned long long address = 0;
-  while ((width_count++ < fs->width || fs->width == -1) &&
-         ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
-          (*str >= 'A' && *str <= 'F'))) {
-    if (*str >= '0' && *str <= '9') {
-      address = address * 16 + (*str - '0');
-    } else if (*str >= 'a' && *str <= 'f') {
-      address = address * 16 + (*str - 'a' + 10);
-    } else if (*str >= 'A' && *str <= 'F') {
-      address = address * 16 + (*str - 'A' + 10);
+  str = skip_spaces(str, fs);
+  if (fs->count != -1) {
+    int width_count = 0;
+    if (*str == '0' && (*(str + 1) == 'x' || *(str + 1) == 'X')) {
+      str += 2;
+      width_count += 2;
     }
-    str++;
+    unsigned long long address = 0;
+    while ((width_count++ < fs->width || fs->width == -1) &&
+          ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
+            (*str >= 'A' && *str <= 'F'))) {
+      if (*str >= '0' && *str <= '9') {
+        address = address * 16 + (*str - '0');
+      } else if (*str >= 'a' && *str <= 'f') {
+        address = address * 16 + (*str - 'a' + 10);
+      } else if (*str >= 'A' && *str <= 'F') {
+        address = address * 16 + (*str - 'A' + 10);
+      }
+      str++;
+    }
+    fs->width = -1;
+    if (!fs->star) {
+      void **ptr = va_arg(vars, void **);
+      *ptr = (void *)address;
+    } else {
+      fs->star = 0;
+    }
+    fs->count++;
   }
-  fs->width = -1;
-  if (!fs->star) {
-    void **ptr = va_arg(vars, void **);
-    *ptr = (void *)address;
-  } else {
-    fs->star = 0;
-  }
-  fs->count++;
   return str;
 }
 
 const char *format_s(const char *str, va_list vars, flags_spec *fs) {
   int width_count = 0;
-  while (*str == ' ') str++;
-  if (!fs->star) {
+  str = skip_spaces(str, fs);
+  if (fs->count != -1 && !fs->star) {
     if (fs->len == 'l') {
       int *str_ptr = va_arg(vars, int *);
       while (*str && *str != ' ' && *str != '\n' &&
-             (width_count++ < fs->width || fs->width == -1)) {
+            (width_count++ < fs->width || fs->width == -1)) {
         *str_ptr++ = *str++;
       }
       *str_ptr = '\0';
@@ -286,17 +304,19 @@ const char *format_s(const char *str, va_list vars, flags_spec *fs) {
     } else {
       char *str_ptr = va_arg(vars, char *);
       while (*str && *str != ' ' && *str != '\n' &&
-             (width_count++ < fs->width || fs->width == -1)) {
+            (width_count++ < fs->width || fs->width == -1)) {
         *str_ptr++ = *str++;
       }
       *str_ptr = '\0';
       fs->len = 0;
     }
     fs->width = -1;
-  } else {
+  } else if (fs->count != -1) {
     fs->star = 0;
   }
-  fs->count++;
+  if (fs->count != -1) {
+    fs->count++;
+  }
   return str;
 }
 
