@@ -64,7 +64,7 @@ const char *format_o(const char *str, va_list vars, flags_spec *fs) {
     int sign = sign_value(&str, &width_count);
     long unsigned int number = 0;
     while (*str >= '0' && *str <= '7' &&
-          (width_count++ < fs->width || fs->width == -1)) {
+           (width_count++ < fs->width || fs->width == -1)) {
       number = number * 8 + (*str - '0');
       str++;
     }
@@ -99,9 +99,9 @@ const char *format_i(const char *str, va_list vars, flags_spec *fs) {
     }
     int number = 0, flag = 0;
     while ((width_count++ < fs->width || fs->width == -1) && !flag &&
-          ((*str >= '0' && *str <= '9') ||
+           ((*str >= '0' && *str <= '9') ||
             (base == 16 &&
-            ((*str >= 'a' && *str <= 'f') || (*str >= 'A' && *str <= 'F'))))) {
+             ((*str >= 'a' && *str <= 'f') || (*str >= 'A' && *str <= 'F'))))) {
       if (*str >= '0' && *str <= '9') {
         number = number * base + (*str - '0');
       } else if (*str >= 'a' && *str <= 'f') {
@@ -130,7 +130,7 @@ const char *format_d(const char *str, va_list vars, flags_spec *fs) {
     int sign = sign_value(&str, &width_count);
     int number = 0;
     while (*str >= '0' && *str <= '9' &&
-          (width_count++ < fs->width || fs->width == -1)) {
+           (width_count++ < fs->width || fs->width == -1)) {
       number = number * 10 + (*str - '0');
       str++;
     }
@@ -202,7 +202,7 @@ const char *format_u(const char *str, va_list vars, flags_spec *fs) {
     int sign = sign_value(&str, &width_count);
     int number = 0;
     while (*str >= '0' && *str <= '9' &&
-          (width_count++ < fs->width || fs->width == -1)) {
+           (width_count++ < fs->width || fs->width == -1)) {
       number = number * 10 + (*str - '0');
       str++;
     }
@@ -233,7 +233,7 @@ const char *format_x(const char *str, va_list vars, flags_spec *fs) {
       }
     }
     while ((width_count++ < fs->width || fs->width == -1) &&
-          ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
+           ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
             (*str >= 'A' && *str <= 'F'))) {
       if (*str >= '0' && *str <= '9') {
         number = number * 16 + (*str - '0');
@@ -266,7 +266,7 @@ const char *format_p(const char *str, va_list vars, flags_spec *fs) {
     }
     unsigned long long address = 0;
     while ((width_count++ < fs->width || fs->width == -1) &&
-          ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
+           ((*str >= '0' && *str <= '9') || (*str >= 'a' && *str <= 'f') ||
             (*str >= 'A' && *str <= 'F'))) {
       if (*str >= '0' && *str <= '9') {
         address = address * 16 + (*str - '0');
@@ -296,7 +296,7 @@ const char *format_s(const char *str, va_list vars, flags_spec *fs) {
     if (fs->len == 'l') {
       int *str_ptr = va_arg(vars, int *);
       while (*str && *str != ' ' && *str != '\n' &&
-            (width_count++ < fs->width || fs->width == -1)) {
+             (width_count++ < fs->width || fs->width == -1)) {
         *str_ptr++ = *str++;
       }
       *str_ptr = '\0';
@@ -304,7 +304,7 @@ const char *format_s(const char *str, va_list vars, flags_spec *fs) {
     } else {
       char *str_ptr = va_arg(vars, char *);
       while (*str && *str != ' ' && *str != '\n' &&
-            (width_count++ < fs->width || fs->width == -1)) {
+             (width_count++ < fs->width || fs->width == -1)) {
         *str_ptr++ = *str++;
       }
       *str_ptr = '\0';
